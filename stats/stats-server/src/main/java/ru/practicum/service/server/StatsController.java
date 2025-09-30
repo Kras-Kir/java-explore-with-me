@@ -1,10 +1,12 @@
 package ru.practicum.service.server;
 
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.service.dto.EndpointHit;
 import ru.practicum.service.dto.ViewStats;
 
@@ -32,6 +34,12 @@ public class StatsController {
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
             @RequestParam(required = false) List<String> uris,
             @RequestParam(defaultValue = "false") Boolean unique) {
+
+        if (start != null && end != null && start.isAfter(end)) {
+            log.warn("Неверный диапазон дат: start {} после end {}", start, end);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Дата начала не может быть позже даты окончания");
+        }
+
 
         log.info("Получен запрос на получение статистики с {} по {}, uris: {}, unique: {}", start, end, uris, unique);
         return statsService.getStats(start, end, uris, unique);

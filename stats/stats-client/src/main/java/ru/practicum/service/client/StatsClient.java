@@ -11,7 +11,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 public class StatsClient {
     private final String serverUrl;
     private final RestTemplate restTemplate;
@@ -76,4 +77,5 @@ public class StatsClient {
             return List.of(); // возвращаем пустой список вместо null
         }
     }
+
 }

@@ -22,6 +22,7 @@ import ru.practicum.repository.UserRepository;
 import ru.practicum.service.ParticipationRequestService;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,6 +46,29 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
+
+        // ДЕТАЛЬНАЯ ДИАГНОСТИКА
+        log.info("=== ДИАГНОСТИКА ЗАЯВКИ ДЛЯ СОБЫТИЯ {} ===", eventId);
+        log.info("Event.requestModeration: {} (type: {})",
+                event.getRequestModeration(),
+                event.getRequestModeration() != null ? event.getRequestModeration().getClass().getSimpleName() : "null");
+        log.info("Event.participantLimit: {} (type: {})",
+                event.getParticipantLimit(),
+                event.getParticipantLimit() != null ? event.getParticipantLimit().getClass().getSimpleName() : "null");
+
+        boolean needsModeration = Boolean.TRUE.equals(event.getRequestModeration())
+                && event.getParticipantLimit() != null
+                && event.getParticipantLimit() > 0;
+
+        log.info("Условие PENDING: {} && {} && {} = {}",
+                Boolean.TRUE.equals(event.getRequestModeration()),
+                event.getParticipantLimit() != null,
+                event.getParticipantLimit() != null && event.getParticipantLimit() > 0,
+                needsModeration);
+
+        RequestStatus status = needsModeration ? RequestStatus.PENDING : RequestStatus.CONFIRMED;
+        log.info("УСТАНОВЛЕН СТАТУС: {}", status);
+        log.info("===============================");
 
         // Проверка, что пользователь не инициатор события
         if (event.getInitiator().getId().equals(userId)) {
@@ -80,6 +104,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         return requestMapper.toParticipationRequestDto(savedRequest);
     }
+
 
     @Override
     public List<ParticipationRequestDto> getUserRequests(Long userId) {
@@ -195,3 +220,4 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .build();
     }
 }
+

@@ -34,5 +34,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Boolean existsByInitiatorAndId(User initiator, Long eventId);
 
+    List<Event> findByState(EventState state);
+
     // Убрали все сложные @Query методы!
 }

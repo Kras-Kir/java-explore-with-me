@@ -18,8 +18,11 @@ import ru.practicum.repository.CompilationRepository;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.repository.ParticipationRequestRepository;
 import ru.practicum.service.CompilationService;
+import ru.practicum.service.client.StatsClient;
+import ru.practicum.service.dto.ViewStats;
 import ru.practicum.validator.DateValidator;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,7 @@ public class CompilationServiceImpl implements CompilationService {
     private final CompilationMapper compilationMapper;
     private final StatsMapper statsMapper;
     private final DateValidator dateValidator;
+    private final StatsClient statsClient;
 
     @Override
     @Transactional
@@ -143,7 +147,7 @@ public class CompilationServiceImpl implements CompilationService {
                 ));
     }
 
-    private Map<Long, Long> getViews(List<Event> events) {
+    /*private Map<Long, Long> getViews(List<Event> events) {
         if (events.isEmpty()) {
             return Map.of();
         }
@@ -152,5 +156,55 @@ public class CompilationServiceImpl implements CompilationService {
         // Пока возвращаем заглушку
         return events.stream()
                 .collect(Collectors.toMap(Event::getId, event -> 0L));
+    }*/
+    private Map<Long, Long> getViews(List<Event> events) {
+        if (events.isEmpty()) {
+            return Map.of();
+        }
+
+        try {
+            // Используем тот же подход, что и в EventServiceImpl
+            LocalDateTime start = LocalDateTime.now().minusYears(10);
+            LocalDateTime end = LocalDateTime.now().plusYears(1);
+
+            List<String> uris = events.stream()
+                    .map(event -> "/events/" + event.getId())
+                    .collect(Collectors.toList());
+
+            // Используем statsClient из EventServiceImpl
+            // Нужно его инжектить и в этот сервис
+            List<ViewStats> stats = statsClient.getStats(start, end, uris, true);
+
+            return parseViewStats(stats);
+
+        } catch (Exception e) {
+            log.warn("Не удалось получить статистику просмотров для подборки: {}", e.getMessage());
+            return events.stream()
+                    .collect(Collectors.toMap(Event::getId, event -> 0L));
+        }
+    }
+
+    private Map<Long, Long> parseViewStats(List<ViewStats> viewStats) {
+        if (viewStats == null || viewStats.isEmpty()) {
+            return Map.of();
+        }
+
+        return viewStats.stream()
+                .filter(stats -> stats.getUri() != null && stats.getHits() != null)
+                .collect(Collectors.toMap(
+                        stats -> extractEventIdFromUri(stats.getUri()),
+                        ViewStats::getHits,
+                        (existing, replacement) -> existing
+                ));
+    }
+
+    private Long extractEventIdFromUri(String uri) {
+        try {
+            String[] parts = uri.split("/");
+            return Long.parseLong(parts[parts.length - 1]);
+        } catch (Exception e) {
+            log.warn("Не удалось извлечь eventId из URI: {}", uri);
+            return null;
+        }
     }
 }

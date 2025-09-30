@@ -9,12 +9,16 @@ import ru.practicum.dto.CategoryDto;
 import ru.practicum.dto.NewCategoryDto;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.exception.ValidationException;
 import ru.practicum.mapper.CategoryMapper;
 import ru.practicum.model.Category;
 import ru.practicum.repository.CategoryRepository;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.service.CategoryService;
 import ru.practicum.validator.DateValidator;
+import lombok.extern.slf4j.Slf4j;
+
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -71,7 +75,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.deleteById(categoryId);
     }
 
-    @Override
+    /*@Override
     public List<CategoryDto> getCategories(Integer from, Integer size) {
         dateValidator.validatePaginationParams(from, size);
 
@@ -80,7 +84,26 @@ public class CategoryServiceImpl implements CategoryService {
                 .stream()
                 .map(categoryMapper::toCategoryDto)
                 .collect(Collectors.toList());
+    }*/
+    @Override
+    public List<CategoryDto> getCategories(Integer from, Integer size) {
+        if (from < 0) {
+            throw new ValidationException("Параметр 'from' не может быть отрицательным");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Параметр 'size' должен быть положительным");
+        }
+
+        int pageNumber = from / size;
+        Pageable pageable = PageRequest.of(pageNumber, size);
+
+        List<Category> categories = categoryRepository.findAll(pageable).getContent();
+
+        return categories.stream()
+                .map(categoryMapper::toCategoryDto)
+                .collect(Collectors.toList());
     }
+
 
     @Override
     public CategoryDto getCategoryById(Long categoryId) {
