@@ -3,6 +3,7 @@ package ru.practicum.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.CategoryDto;
@@ -95,7 +96,8 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         int pageNumber = from / size;
-        Pageable pageable = PageRequest.of(pageNumber, size);
+
+        Pageable pageable = PageRequest.of(pageNumber, size, Sort.by("id").descending());
 
         List<Category> categories = categoryRepository.findAll(pageable).getContent();
 
