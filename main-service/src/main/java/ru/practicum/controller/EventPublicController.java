@@ -72,15 +72,7 @@ public class EventPublicController {
                 onlyAvailable, sort, from, size);
     }
 
-    /*@GetMapping("/{id}")
-    public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
-        log.info("Получен публичный запрос на получение события с id: {}", id);
 
-        // Логируем информацию о запросе для статистики
-        log.info("Запрос от IP: {}, URI: {}", request.getRemoteAddr(), request.getRequestURI());
-
-        return eventService.getPublicEventById(id);
-    }*/
     @GetMapping("/{id}")
     public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
         String clientIp = extractIp(request);

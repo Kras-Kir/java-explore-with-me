@@ -47,29 +47,6 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
 
-        // ДЕТАЛЬНАЯ ДИАГНОСТИКА
-        log.info("=== ДИАГНОСТИКА ЗАЯВКИ ДЛЯ СОБЫТИЯ {} ===", eventId);
-        log.info("Event.requestModeration: {} (type: {})",
-                event.getRequestModeration(),
-                event.getRequestModeration() != null ? event.getRequestModeration().getClass().getSimpleName() : "null");
-        log.info("Event.participantLimit: {} (type: {})",
-                event.getParticipantLimit(),
-                event.getParticipantLimit() != null ? event.getParticipantLimit().getClass().getSimpleName() : "null");
-
-        boolean needsModeration = Boolean.TRUE.equals(event.getRequestModeration())
-                && event.getParticipantLimit() != null
-                && event.getParticipantLimit() > 0;
-
-        log.info("Условие PENDING: {} && {} && {} = {}",
-                Boolean.TRUE.equals(event.getRequestModeration()),
-                event.getParticipantLimit() != null,
-                event.getParticipantLimit() != null && event.getParticipantLimit() > 0,
-                needsModeration);
-
-        RequestStatus status = needsModeration ? RequestStatus.PENDING : RequestStatus.CONFIRMED;
-        log.info("УСТАНОВЛЕН СТАТУС: {}", status);
-        log.info("===============================");
-
         // Проверка, что пользователь не инициатор события
         if (event.getInitiator().getId().equals(userId)) {
             throw new ConflictException("Инициатор события не может подать заявку на участие в своём событии");
@@ -80,7 +57,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
             throw new ConflictException("Нельзя участвовать в неопубликованном событии");
         }
 
-        // Проверка, что заявка уже существует (используем existsBy)
+        // Проверка, что заявка уже существует
         if (requestRepository.existsByEventAndRequester(event, user)) {
             throw new ConflictException("Заявка на участие в этом событии уже существует");
         }
@@ -91,17 +68,19 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
             throw new ConflictException("Достигнут лимит участников события");
         }
 
+        // Определение статуса заявки
+        RequestStatus status = (event.getRequestModeration() && event.getParticipantLimit() > 0)
+                ? RequestStatus.PENDING
+                : RequestStatus.CONFIRMED;
+
         ParticipationRequest request = ParticipationRequest.builder()
                 .event(event)
                 .requester(user)
                 .created(LocalDateTime.now())
-                .status(event.getRequestModeration() && event.getParticipantLimit() > 0 ?
-                        RequestStatus.PENDING : RequestStatus.CONFIRMED)
+                .status(status)
                 .build();
 
         ParticipationRequest savedRequest = requestRepository.save(request);
-        log.info("Создана заявка на участие с id: {}", savedRequest.getId());
-
         return requestMapper.toParticipationRequestDto(savedRequest);
     }
 

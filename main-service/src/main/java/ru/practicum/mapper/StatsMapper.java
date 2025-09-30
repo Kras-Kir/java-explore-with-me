@@ -55,34 +55,7 @@ public class StatsMapper {
                 .collect(Collectors.toList());
     }
 
-    /*public List<EventFullDto> toEventFullDtoList(List<Event> events,
-                                                 Map<Long, Long> confirmedRequestsMap,
-                                                 Map<Long, Long> viewsMap) {
-        return events.stream()
-                .map(event -> {
-                    Long confirmedRequests = confirmedRequestsMap.getOrDefault(event.getId(), 0L);
-                    Long views = viewsMap.getOrDefault(event.getId(), 0L);
-                    return EventFullDto.builder()
-                            .id(event.getId())
-                            .title(event.getTitle())
-                            .annotation(event.getAnnotation())
-                            .description(event.getDescription())
-                            .category(categoryMapper.toCategoryDto(event.getCategory()))    // ✅ Spring бин
-                            .initiator(userMapper.toUserShortDto(event.getInitiator()))     // ✅ Spring бин
-                            .createdOn(event.getCreatedOn())
-                            .eventDate(event.getEventDate())
-                            .publishedOn(event.getPublishedOn())
-                            .location(locationMapper.toLocationDto(event.getLocation()))    // ✅ Spring бин
-                            .paid(event.getPaid())
-                            .participantLimit(event.getParticipantLimit())
-                            .requestModeration(event.getRequestModeration())
-                            .state(event.getState())
-                            .confirmedRequests(confirmedRequests)
-                            .views(views)
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }*/
+
     public List<EventFullDto> toEventFullDtoList(List<Event> events,
                                                  Map<Long, Long> confirmedRequestsMap,
                                                  Map<Long, Long> viewsMap) {

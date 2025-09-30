@@ -76,16 +76,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.deleteById(categoryId);
     }
 
-    /*@Override
-    public List<CategoryDto> getCategories(Integer from, Integer size) {
-        dateValidator.validatePaginationParams(from, size);
 
-        Pageable pageable = PageRequest.of(from / size, size);
-        return categoryRepository.findAll(pageable).getContent()
-                .stream()
-                .map(categoryMapper::toCategoryDto)
-                .collect(Collectors.toList());
-    }*/
     @Override
     public List<CategoryDto> getCategories(Integer from, Integer size) {
         if (from < 0) {

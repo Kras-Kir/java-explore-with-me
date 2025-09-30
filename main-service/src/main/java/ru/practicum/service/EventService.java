@@ -24,14 +24,10 @@ public interface EventService {
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateEvent);
 
-    /*List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
-                                        LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                        Boolean onlyAvailable, String sort, Integer from, Integer size);*/
     List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                         LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                         Boolean onlyAvailable, String sort, Integer from, Integer size);
 
-    //EventFullDto getPublicEventById(Long eventId);
     EventFullDto getPublicEventById(Long eventId, String clientIp);
 
     void saveHit(String app, String uri, String ip);

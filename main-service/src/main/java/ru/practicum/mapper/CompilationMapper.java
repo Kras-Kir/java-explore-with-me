@@ -24,25 +24,4 @@ public interface CompilationMapper {
     @Mapping(target = "events", ignore = true)
     void updateCompilationFromRequest(UpdateCompilationRequest updateCompilationRequest, @MappingTarget Compilation compilation);
 
-    /*default Set<Event> mapEventIdsToEvents(Set<Long> eventIds) {
-        if (eventIds == null) {
-            return Set.of();
-        }
-        return eventIds.stream()
-                .map(id -> {
-                    Event event = new Event();
-                    event.setId(id);
-                    return event;
-                })
-                .collect(Collectors.toSet());
-    }
-
-    default Set<Long> mapEventsToEventIds(Set<Event> events) {
-        if (events == null) {
-            return Set.of();
-        }
-        return events.stream()
-                .map(Event::getId)
-                .collect(Collectors.toSet());
-    }*/
 }

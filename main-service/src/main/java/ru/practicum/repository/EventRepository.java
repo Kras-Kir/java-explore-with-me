@@ -24,17 +24,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Boolean existsByCategoryId(Long categoryId);
 
-    Page<Event> findByState(EventState state, Pageable pageable);
-
-    Page<Event> findByStateAndEventDateAfter(EventState state, LocalDateTime eventDate, Pageable pageable);
-
-    Page<Event> findByStateAndCategoryIdIn(EventState state, List<Long> categoryIds, Pageable pageable);
-
-    Page<Event> findByStateAndPaid(EventState state, Boolean paid, Pageable pageable);
-
-    Boolean existsByInitiatorAndId(User initiator, Long eventId);
-
     List<Event> findByState(EventState state);
 
-    // Убрали все сложные @Query методы!
 }

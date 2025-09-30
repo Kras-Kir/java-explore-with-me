@@ -45,7 +45,7 @@ public class EventServiceImpl implements EventService {
     private final StatsMapper statsMapper;
     private final StatsClient statsClient;
     private final DateValidator dateValidator;
-    private final LocationRepository locationRepository; // ← ДОБАВЬТЕ ЭТО
+    private final LocationRepository locationRepository;
     private final LocationMapper locationMapper;
 
     @Override
@@ -148,49 +148,6 @@ public class EventServiceImpl implements EventService {
     }
 
 
-    /*@Override
-    public List<EventFullDto> searchEventsByAdmin(List<Long> users, List<EventState> states, List<Long> categories,
-                                                  LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                  Integer from, Integer size) {
-        try {
-            dateValidator.validateDateRange(rangeStart, rangeEnd);
-            dateValidator.validatePaginationParams(from, size);
-
-            log.info("=== SEARCH_EVENTS_BY_ADMIN ===");
-
-            // 1. Получить ВСЕ события без пагинации
-            List<Event> allEvents = eventRepository.findAll();
-            log.info("Total events in DB: {}", allEvents.size());
-
-            // 2. Отфильтровать
-            List<Event> filteredEvents = allEvents.stream()
-                    .filter(event -> users == null || users.isEmpty() || users.contains(event.getInitiator().getId()))
-                    .filter(event -> states == null || states.isEmpty() || states.contains(event.getState()))
-                    .filter(event -> categories == null || categories.isEmpty() || categories.contains(event.getCategory().getId()))
-                    .filter(event -> rangeStart == null || event.getEventDate().isAfter(rangeStart))
-                    .filter(event -> rangeEnd == null || event.getEventDate().isBefore(rangeEnd))
-                    .collect(Collectors.toList());
-
-            log.info("Events after filtering: {}", filteredEvents.size());
-
-            // 3. Применить пагинацию вручную
-            int start = Math.min(from, filteredEvents.size());
-            int end = Math.min(from + size, filteredEvents.size());
-            List<Event> paginatedEvents = filteredEvents.subList(start, end);
-
-            log.info("Events after pagination: {}", paginatedEvents.size());
-
-            Map<Long, Long> confirmedRequests = getConfirmedRequests(paginatedEvents);
-            Map<Long, Long> views = getViews(paginatedEvents);
-
-            return statsMapper.toEventFullDtoList(paginatedEvents, confirmedRequests, views);
-
-        } catch (Exception e) {
-            log.error("Error in searchEventsByAdmin: ", e);
-            throw new RuntimeException("Failed to search events", e);
-        }
-    }*/
-    //для теста
     @Override
     @Transactional(readOnly = true)
     public List<EventFullDto> searchEventsByAdmin(List<Long> users, List<EventState> states, List<Long> categories,
@@ -265,50 +222,6 @@ public class EventServiceImpl implements EventService {
     }
 
 
-    /*@Override
-    public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
-                                               LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Boolean onlyAvailable, String sort, Integer from, Integer size) {
-
-        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
-            throw new ValidationException("Дата начала не может быть позже даты окончания");
-        }
-
-        try {
-            log.info("Getting public events with params: text={}, categories={}, paid={}", text, categories, paid);
-
-            dateValidator.validateDateRange(rangeStart, rangeEnd);
-            dateValidator.validatePaginationParams(from, size);
-
-            if (rangeStart == null) {
-                rangeStart = LocalDateTime.now();
-            }
-
-            Pageable pageable = PageRequest.of(from / size, size);
-
-            // Получаем базовый список опубликованных событий
-            List<Event> events = getBasePublishedEvents(pageable);
-
-            // Фильтруем по всем параметрам
-            events = filterEvents(events, text, categories, paid, rangeStart, rangeEnd, onlyAvailable);
-
-            // Сортируем
-            events = sortEvents(events, sort);
-
-            Map<Long, Long> confirmedRequests = getConfirmedRequests(events);
-            Map<Long, Long> views = getViews(events);
-
-            List<EventShortDto> result = statsMapper.toEventShortDtoList(events, confirmedRequests, views);
-
-            log.info("Returning {} events", result.size());
-            return result;
-
-        } catch (Exception e) {
-            log.error("Error in getPublicEvents: ", e);
-            throw new RuntimeException("Failed to get public events", e);
-        }
-    }*/
-    //добавлен
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
@@ -376,29 +289,12 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    /*private List<Event> getBasePublishedEvents(Pageable pageable) {
-        return eventRepository.findByState(EventState.PUBLISHED, pageable).getContent();
-    }*/
-    //добавлен
+
     private List<Event> getBasePublishedEvents() {
         return eventRepository.findByState(EventState.PUBLISHED);
     }
 
-    /*private List<Event> filterEvents(List<Event> events, String text, List<Long> categories,
-                                     Boolean paid, LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                     Boolean onlyAvailable) {
-        return events.stream()
-                .filter(event -> text == null || text.isBlank() ||
-                        containsText(event, text))
-                .filter(event -> categories == null || categories.isEmpty() ||
-                        categories.contains(event.getCategory().getId()))
-                .filter(event -> paid == null || event.getPaid().equals(paid))
-                .filter(event -> event.getEventDate().isAfter(rangeStart))
-                .filter(event -> rangeEnd == null || event.getEventDate().isBefore(rangeEnd))
-                .filter(event -> !Boolean.TRUE.equals(onlyAvailable) || isEventAvailable(event))
-                .collect(Collectors.toList());
-    }*/
-    //добавлен
+
     private List<Event> filterEvents(List<Event> events, String text, List<Long> categories,
                                      Boolean paid, LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                      Boolean onlyAvailable) {
@@ -420,22 +316,13 @@ public class EventServiceImpl implements EventService {
                 event.getDescription().toLowerCase().contains(searchText);
     }
 
-    /*private List<Event> sortEvents(List<Event> events, String sort) {
-        if ("EVENT_DATE".equals(sort)) {
-            events.sort(Comparator.comparing(Event::getEventDate).reversed());
-        } else if ("VIEWS".equals(sort)) {
-            // Сортировка по просмотрам будет применена позже к DTO
-        }
-        return events;
-    }*/
-    //добавлен
+
     private List<Event> sortEvents(List<Event> events, String sort) {
         List<Event> sortedEvents = new ArrayList<>(events);
 
         if ("EVENT_DATE".equals(sort)) {
             sortedEvents.sort(Comparator.comparing(Event::getEventDate));
         }
-        // Сортировка по просмотрам будет применена позже к DTO
 
         return sortedEvents;
     }
@@ -452,7 +339,7 @@ public class EventServiceImpl implements EventService {
             return confirmedRequests < event.getParticipantLimit();
         } catch (Exception e) {
             log.warn("Error checking event availability for event {}: {}", event.getId(), e.getMessage());
-            return true; // В случае ошибки считаем событие доступным
+            return true;
         }
     }
 
@@ -480,29 +367,7 @@ public class EventServiceImpl implements EventService {
     }
 
 
-    /*private Map<Long, Long> getConfirmedRequests(List<Event> events) {
-        if (events.isEmpty()) {
-            return Map.of();
-        }
-
-        Map<Long, Long> result = new HashMap<>();
-
-        for (Event event : events) {
-            try {
-                Long count = requestRepository.countByEventAndStatus(event, RequestStatus.CONFIRMED);
-                result.put(event.getId(), count != null ? count : 0L);
-            } catch (Exception e) {
-                log.warn("Error counting confirmed requests for event {}: {}", event.getId(), e.getMessage());
-                result.put(event.getId(), 0L);
-            }
-        }
-
-        return result;
-    }*/
-    //проверка
     private Map<Long, Long> getConfirmedRequests(List<Event> events) {
-        log.info("=== GET_CONFIRMED_REQUESTS ===");
-        log.info("Input events: {}", events.stream().map(Event::getId).collect(Collectors.toList()));
 
         if (events.isEmpty()) {
             return Map.of();
@@ -512,25 +377,18 @@ public class EventServiceImpl implements EventService {
 
         for (Event event : events) {
             try {
-                // Детальная диагностика
                 List<ParticipationRequest> allRequests = requestRepository.findByEvent(event);
-                log.info("Event {}: all requests count = {}", event.getId(), allRequests.size());
 
                 List<ParticipationRequest> confirmedRequests = requestRepository.findByEventAndStatus(event, RequestStatus.CONFIRMED);
-                log.info("Event {}: confirmed requests count (via findByEventAndStatus) = {}", event.getId(), confirmedRequests.size());
 
                 Long count = requestRepository.countByEventAndStatus(event, RequestStatus.CONFIRMED);
-                log.info("Event {}: confirmed requests count (via countByEventAndStatus) = {}", event.getId(), count);
 
                 result.put(event.getId(), count != null ? count : 0L);
             } catch (Exception e) {
-                log.error("Error counting confirmed requests for event {}: {}", event.getId(), e.getMessage(), e);
                 result.put(event.getId(), 0L);
             }
         }
 
-        log.info("Final confirmed requests result: {}", result);
-        log.info("======================");
         return result;
     }
 
@@ -546,22 +404,10 @@ public class EventServiceImpl implements EventService {
                     .map(event -> "/events/" + event.getId())
                     .collect(Collectors.toList());
 
-            System.out.println("=== GET_VIEWS CALLED ===");
-            System.out.println("Events: " + events.stream().map(Event::getId).collect(Collectors.toList()));
-            System.out.println("URIs: " + uris);
-            System.out.println("Time range: " + start + " to " + end);
-
             // Получаем статистику
             List<ViewStats> stats = statsClient.getStats(start, end, uris, true);
 
-            System.out.println("Received stats count: " + (stats != null ? stats.size() : "null"));
-            if (stats != null) {
-                stats.forEach(s -> System.out.println("Stat: " + s.getUri() + " -> " + s.getHits()));
-            }
-
             Map<Long, Long> result = parseViewStats(stats);
-            System.out.println("Final views: " + result);
-            System.out.println("====================");
 
             return result;
 

@@ -147,23 +147,12 @@ public class CompilationServiceImpl implements CompilationService {
                 ));
     }
 
-    /*private Map<Long, Long> getViews(List<Event> events) {
-        if (events.isEmpty()) {
-            return Map.of();
-        }
-
-        // Здесь будет логика получения просмотров из сервиса статистики
-        // Пока возвращаем заглушку
-        return events.stream()
-                .collect(Collectors.toMap(Event::getId, event -> 0L));
-    }*/
     private Map<Long, Long> getViews(List<Event> events) {
         if (events.isEmpty()) {
             return Map.of();
         }
 
         try {
-            // Используем тот же подход, что и в EventServiceImpl
             LocalDateTime start = LocalDateTime.now().minusYears(10);
             LocalDateTime end = LocalDateTime.now().plusYears(1);
 
@@ -171,8 +160,6 @@ public class CompilationServiceImpl implements CompilationService {
                     .map(event -> "/events/" + event.getId())
                     .collect(Collectors.toList());
 
-            // Используем statsClient из EventServiceImpl
-            // Нужно его инжектить и в этот сервис
             List<ViewStats> stats = statsClient.getStats(start, end, uris, true);
 
             return parseViewStats(stats);
