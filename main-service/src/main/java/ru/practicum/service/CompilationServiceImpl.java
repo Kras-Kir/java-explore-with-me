@@ -17,7 +17,6 @@ import ru.practicum.model.Event;
 import ru.practicum.repository.CompilationRepository;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.repository.ParticipationRequestRepository;
-import ru.practicum.service.CompilationService;
 import ru.practicum.service.client.StatsClient;
 import ru.practicum.service.dto.ViewStats;
 import ru.practicum.validator.DateValidator;
@@ -45,14 +44,7 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
         Compilation compilation = compilationMapper.toCompilation(newCompilationDto);
 
-        if (newCompilationDto.getEvents() != null && !newCompilationDto.getEvents().isEmpty()) {
-            List<Event> events = eventRepository.findByIdIn(newCompilationDto.getEvents());
-            // Проверяем, что все события найдены
-            if (events.size() != newCompilationDto.getEvents().size()) {
-                throw new NotFoundException("Некоторые события не найдены");
-            }
-            compilation.setEvents(new HashSet<>(events));
-        }
+        setEventsToCompilation(compilation, newCompilationDto.getEvents());
 
         Compilation savedCompilation = compilationRepository.save(compilation);
         log.info("Создана подборка с id: {}", savedCompilation.getId());
@@ -69,12 +61,7 @@ public class CompilationServiceImpl implements CompilationService {
         compilationMapper.updateCompilationFromRequest(updateRequest, compilation);
 
         if (updateRequest.getEvents() != null) {
-            List<Event> events = eventRepository.findByIdIn(updateRequest.getEvents());
-            // Проверяем, что все события найдены
-            if (events.size() != updateRequest.getEvents().size()) {
-                throw new NotFoundException("Некоторые события не найдены");
-            }
-            compilation.setEvents(new HashSet<>(events));
+            setEventsToCompilation(compilation, updateRequest.getEvents());
         }
 
         Compilation updatedCompilation = compilationRepository.save(compilation);
@@ -193,5 +180,20 @@ public class CompilationServiceImpl implements CompilationService {
             log.warn("Не удалось извлечь eventId из URI: {}", uri);
             return null;
         }
+    }
+
+    private void setEventsToCompilation(Compilation compilation, List<Long> eventIds) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            compilation.setEvents(Collections.emptySet());
+            return;
+        }
+
+        List<Event> events = eventRepository.findByIdIn(eventIds);
+
+        if (events.size() != eventIds.size()) {
+            throw new NotFoundException("Некоторые события не найдены");
+        }
+
+        compilation.setEvents(new HashSet<>(events));
     }
 }

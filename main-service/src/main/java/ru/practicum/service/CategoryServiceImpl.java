@@ -15,9 +15,8 @@ import ru.practicum.mapper.CategoryMapper;
 import ru.practicum.model.Category;
 import ru.practicum.repository.CategoryRepository;
 import ru.practicum.repository.EventRepository;
-import ru.practicum.service.CategoryService;
 import ru.practicum.validator.DateValidator;
-import lombok.extern.slf4j.Slf4j;
+
 
 
 
@@ -49,8 +48,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryDto updateCategory(Long categoryId, CategoryDto categoryDto) {
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Категория с id=" + categoryId + " не найдена"));
+        Category category = getCategory(categoryId);
 
         if (!category.getName().equals(categoryDto.getName()) &&
                 categoryRepository.existsByName(categoryDto.getName())) {
@@ -103,5 +101,10 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Категория с id=" + categoryId + " не найдена"));
         return categoryMapper.toCategoryDto(category);
+    }
+
+    private Category getCategory(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Категория с id=" + categoryId + " не найдена"));
     }
 }

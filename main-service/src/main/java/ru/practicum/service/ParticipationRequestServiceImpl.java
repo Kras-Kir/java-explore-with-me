@@ -19,10 +19,8 @@ import ru.practicum.model.enums.RequestStatus;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.repository.ParticipationRequestRepository;
 import ru.practicum.repository.UserRepository;
-import ru.practicum.service.ParticipationRequestService;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,11 +39,8 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     @Transactional
     public ParticipationRequestDto createRequest(Long userId, Long eventId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
+        User user = getUserById(userId);
+        Event event = getEventById(eventId);
 
         // Проверка, что пользователь не инициатор события
         if (event.getInitiator().getId().equals(userId)) {
@@ -87,8 +82,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
     @Override
     public List<ParticipationRequestDto> getUserRequests(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+        User user = getUserById(userId);
 
         return requestRepository.findByRequester(user).stream()
                 .map(requestMapper::toParticipationRequestDto)
@@ -98,11 +92,9 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     @Transactional
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+        User user = getUserById(userId);
 
-        ParticipationRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new NotFoundException("Заявка с id=" + requestId + " не найдена"));
+        ParticipationRequest request = getRequestById(requestId);
 
         if (!request.getRequester().getId().equals(userId)) {
             throw new NotFoundException("Заявка с id=" + requestId + " не принадлежит пользователю с id=" + userId);
@@ -116,11 +108,8 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
     @Override
     public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
+        User user = getUserById(userId);
+        Event event = getEventById(eventId);
 
         if (!event.getInitiator().getId().equals(userId)) {
             throw new NotFoundException("Пользователь с id=" + userId + " не является инициатором события с id=" + eventId);
@@ -134,11 +123,8 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     @Transactional
     public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest updateRequest) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
+        User user = getUserById(userId);
+        Event event = getEventById(eventId);
 
         if (!event.getInitiator().getId().equals(userId)) {
             throw new NotFoundException("Пользователь с id=" + userId + " не является инициатором события с id=" + eventId);
@@ -197,6 +183,21 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .confirmedRequests(confirmed)
                 .rejectedRequests(rejected)
                 .build();
+    }
+
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+    }
+
+    private Event getEventById(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
+    }
+
+    private ParticipationRequest getRequestById(Long requestId) {
+        return requestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Заявка с id=" + requestId + " не найдена"));
     }
 }
 

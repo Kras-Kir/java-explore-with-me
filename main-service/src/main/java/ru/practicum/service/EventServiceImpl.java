@@ -4,9 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.exception.ValidationException;
 import ru.practicum.mapper.LocationMapper;
@@ -63,11 +61,8 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Annotation must be between 20 and 2000 characters");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-
-        Category category = categoryRepository.findById(newEventDto.getCategory())
-                .orElseThrow(() -> new NotFoundException("Категория с id=" + newEventDto.getCategory() + " не найдена"));
+        User user = getUserById(userId);
+        Category category = getCategoryById(newEventDto.getCategory());
 
         // 1. СОХРАНЯЕМ LOCATION В БАЗУ
         Location location = locationMapper.toLocation(newEventDto.getLocation());
@@ -88,8 +83,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getUserEvents(Long userId, Integer from, Integer size) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+        User user = getUserById(userId);
 
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findByInitiator(user, pageable).getContent();
@@ -102,11 +96,9 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getUserEventById(Long userId, Long eventId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+        User user = getUserById(userId);
 
-        Event event = eventRepository.findByIdAndInitiator(eventId, user)
-                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " у пользователя с id=" + userId + " не найдено"));
+        Event event = getEventByUserAndId(eventId, user);
 
         Long confirmedRequests = requestRepository.countByEventAndStatus(event, ru.practicum.model.enums.RequestStatus.CONFIRMED);
         Long views = getViews(List.of(event)).getOrDefault(eventId, 0L);
@@ -117,11 +109,9 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest updateEvent) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+        User user = getUserById(userId);
 
-        Event event = eventRepository.findByIdAndInitiator(eventId, user)
-                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " у пользователя с id=" + userId + " не найдено"));
+        Event event = getEventByUserAndId(eventId, user);
 
         if (event.getState() == EventState.PUBLISHED) {
             throw new ConflictException("Нельзя изменить опубликованное событие");
@@ -442,6 +432,21 @@ public class EventServiceImpl implements EventService {
             log.warn("Не удалось извлечь eventId из URI: {}", uri);
             return null;
         }
+    }
+
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+    }
+
+    private Category getCategoryById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Категория с id=" + categoryId + " не найдена"));
+    }
+
+    private Event getEventByUserAndId(Long eventId, User user) {
+        return eventRepository.findByIdAndInitiator(eventId, user)
+                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " у пользователя с id=" + user.getId() + " не найдено"));
     }
 
 }
