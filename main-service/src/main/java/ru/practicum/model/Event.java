@@ -5,6 +5,7 @@ import ru.practicum.model.enums.EventState;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -65,6 +66,9 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false, length = 20)
     private EventState state;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    private List<Comment> comments;
 
     @Override
     public boolean equals(Object o) {
